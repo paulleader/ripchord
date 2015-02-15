@@ -1,0 +1,26 @@
+#!/usr/bin/ruby
+require 'optparse'
+require 'pathname'
+require 'logger'
+require 'open3'
+require 'fileutils'
+
+require './lib/disc_info'
+require './lib/handbrake'
+require './lib/log'
+require './lib/make_mkv'
+require './lib/working_area'
+require './lib/options'
+require './lib/pipeline'
+
+# Pipeline
+# Disc -> (Ripper) -> MKV Queue -> (Handbreak) -> mp4
+
+options = Options.new
+
+Log.set_out(options.log_file)
+
+Log.info options.summary
+
+pipeline = Pipeline.new(Log, options)
+pipeline.run
