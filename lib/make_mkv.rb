@@ -16,9 +16,6 @@ class MakeMKV
   end
 
   def rip_directory
-    @log.info "Rip dir"
-    @log.info @destination
-    @log.info @title
     File.join(@destination, @title)
   end
 
@@ -28,7 +25,6 @@ class MakeMKV
     @log.info "Title: #{@title}"
     @log.info "Destination: #{rip_directory}"
     build_target_dir
-    @log.info "Start ripping to #{rip_directory}"
     cmd = "/usr/bin/makemkvcon -r --decrypt --directio=true --noscan --minlength=1400 mkv disc:0 all #{rip_directory}"
     @log.info cmd
 

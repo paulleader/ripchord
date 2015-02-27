@@ -1,16 +1,16 @@
 class Handbrake
   def convert(mkv, mp4, preset)
-    cmd = "HandBrakeCLI -i #{mkv} --verbose -o #{mp4} --preset='#{preset}'"
-    @log.info "Starting HandBrakeCLI"
-    @log.info cmd
+    cmd = "HandBrakeCLI -i #{mkv} -o #{mp4} --preset='#{preset}'"
+    @log.info "Handbrake: #{cmd}"
 
     Open3.popen3(cmd) do |stdin, stdout, stderr, wait_thread|
       until (stdout_line = stdout.gets).nil? do
-        @log.info stdout_line
+        unless stdout_line =~ /Encoding: task 1 of 1/
+          @log.info stdout_line
+        end
       end
     end
-
-    @log.info "Finished conversion"
+    
   end
   
   def initialize(logger)

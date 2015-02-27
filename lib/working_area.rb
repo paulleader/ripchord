@@ -31,6 +31,10 @@ class WorkingArea
     File.join(ripped_disc_directory(title), 'title00.mkv')
   end
 
+  def cleanup_rip(title)
+    FileUtils.rm_rf(ripped_disc_directory(title))
+  end
+
   def converted_directory
     File.join(@root, SUBDIRECTORIES[:finished])
   end
@@ -49,7 +53,7 @@ class WorkingArea
 
   def check_working_directory
     @log.info "Checking working directory"
-    raise NoWorkingDirectory unless Dir.exist? @root
+    raise NoWorkingDirectory, @root unless Dir.exist? @root
   end
 
   def subdir_path(stage)

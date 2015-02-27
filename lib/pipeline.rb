@@ -1,40 +1,55 @@
-class Pipeline
+require './lib/disc_info'
+require './lib/handbrake'
+require './lib/make_mkv'
+require './lib/working_area'
+require './lib/options'
+require './lib/process_thread'
+require './lib/ripper'
+require './lib/transcoder'
+require './lib/installer'
+require './lib/job'
+require './lib/job_factory'
 
-  def initialize(log, options)
+class Pipeline
+  
+  def _build_queues
+    @to_rip = Queue.new
+    @to_transcode = Queue.new
+    @to_install = Queue.new
+    @completed = Queue.new  
+  end
+  
+  def _build_pipeline
+    @working_area = WorkingArea.new(Log, @options.working_directory)
+    @ripper = Ripper.new(@to_rip, @to_transcode, @working_area, @log)
+    @transcoder = Transcoder.new(@to_transcode, @to_install, @working_area, @log)
+    @installer = Installer.new(@to_install, @completed, @working_area, @log)
+  end
+  
+  def _terminate_threads
+    @to_rip << nil
+  end
+  
+  def _run_pipeline
+    while @job_factory.work_in_progress?
+      sleep 30
+    end
+    _terminate_threads
+  end
+  
+  def _start
+    unless @job_factory.already_running
+      _build_pipeline
+      _run_pipeline
+    end
+  end
+  
+  def initialize(options, log)
     @options = options
     @log = log
     
-    @working_area_dir = @options.working_directory
-    @area = WorkingArea.new(@log, @working_area_dir)
-    @disc = DiscInfo.new(@log, options.device)
-    
-    @log.info "Title: #{@disc.title}"
+    _build_queues
+    @job_factory = JobFactory.new(@to_rip, @options, @log)
+    _start
   end
-  
-  def identify
-    @title = @disc.title
-  end
-  
-  def rip
-    @make_mkv = MakeMKV.new(@log, @title, @options.disc, @area.ripping_dir)
-    @make_mkv.rip
-    @area.move_to_transcoding(@title)
-  end
-
-  def convert
-    @handbrake = Handbrake.new(@log)
-    @handbrake.convert(@area.ripped_file(@title), @area.converting_file(@title), @options.preset)
-  end
-  
-  def install
-    FileUtils.move(@area.converting_file(@title), @options.destination_directory)
-  end
-  
-  def run
-    identify
-    rip
-    convert
-    install
-  end
-  
 end
