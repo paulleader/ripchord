@@ -5,8 +5,8 @@ require 'logger'
 require 'open3'
 require 'fileutils'
 require 'thread'
-require './lib/log'
-require './lib/pipeline'
+require_relative 'lib/log'
+require_relative 'lib/pipeline'
 
 options = Options.new
 
