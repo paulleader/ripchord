@@ -26,6 +26,9 @@ Ripping and transcoding are done in separate threads, ripped video is queued up 
 ### Gems
 
 * Pidfile: You'll need to install is from my fork which has a bug fix - git@github.com:paulleader/pidfile.git
+
+### External Tools
+
 * MakeMKV: Actually rips the DVD/Blueray - http://www.makemkv.com/
 * Handbrake: To transcode the rip to something sensible for playback - https://handbrake.fr/
 
