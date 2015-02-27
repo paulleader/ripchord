@@ -60,7 +60,16 @@ Ripchord will now run automatically when you insert a DVD in the drive.
 * It's limited to using MakeMKV and Handbrake.
 * It only handles movies (only long tracks are currently ripped and converted).
 * Subtitles are not extracted.
-* Naming of the result is based on the title found on the disc.
+* Naming of the result is based on the title found on the disc, this is not always that reliable, so you may have to rename some files if you want your media player to correctly identify them.
+
+## Contributing
+
+1. Fork it!
+2. Create your feature branch: `git checkout -b my-new-feature`
+3. Commit your changes: `git commit -am 'Add some feature'`
+4. Push to the branch: `git push origin my-new-feature`
+5. Submit a pull request
+6. Wait a couple of days while I find the time to respond in-between feeding/changing the baby... :)
 
 ## TODO
 
@@ -69,21 +78,18 @@ Ripchord will now run automatically when you insert a DVD in the drive.
 * Improve exception handling.
 * Extract configuration into a configuration file.
 * Identify TV series and rip multiple episodes into a directory with appropriate file names.
+* Store the current state of jobs in a persistent store so that processing can be restarted after a failure.
 * Package as a gem.
 * Add notifications to email.
 * Work out a better way of identifying discs.
+* Support alternative rippers and transcoders.
+* Add support for audio ripping.
 
 Things I don't have the hardware for but which would be nice to do eventually:
 * Add support for multiple transcoder threads.
 * Add support for multiple concurrent rips (if you have multiple drives).
 
-## Contributing
-
-1. Fork it!
-2. Create your feature branch: `git checkout -b my-new-feature`
-3. Commit your changes: `git commit -am 'Add some feature'`
-4. Push to the branch: `git push origin my-new-feature`
-5. Submit a pull request :D
+I'm tempted to invert the concurrency model from the current one thread per stage, linked by queues, to one thread per disc, with counting semaphores/mutexes for synchronisation.
 
 ## Credits
 
