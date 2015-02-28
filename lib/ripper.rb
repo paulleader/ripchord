@@ -9,6 +9,7 @@ class Ripper < ProcessThread
     MakeMKV.new(@log, job.title, disc = job.device, @working_area.ripping_dir).rip
     @working_area.move_to_transcoding(job.title)
     @log.info "Moved to transcoding #{job}"
+    `eject`
   end
 
 end
