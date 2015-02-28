@@ -4,7 +4,7 @@ class Log
   end
 
   def self.logger
-    @@logger ||= Logger.new(@@location, 10, 1024000)
+    @@log ||= Logger.new(@@location, 10, 1024000)
   end
   
   def self.info(message)

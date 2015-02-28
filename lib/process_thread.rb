@@ -11,7 +11,7 @@ class ProcessThread
   end
 
   def _next_job
-    @logger.info "#{self.class}: Waiting for job on #{@in} (#{@in.length} jobs in queue)"
+    @log.info "#{self.class}: Waiting for job on #{@in} (#{@in.length} jobs in queue)"
     job = @in.pop
     job.state = _stage
     job
@@ -22,20 +22,20 @@ class ProcessThread
   end
 
   def _thread
-    @logger.info "Starting thread #{self.class}"
+    @log.info "Starting thread #{self.class}"
     Thread.new do
       begin
         while job = _next_job do
-          @logger.info "#{self.class}: Got job #{job.inspect}"
+          @log.info "#{self.class}: Got job #{job.inspect}"
           if job
             _process(job)
           end
           @out << job
         end
       rescue Exception => e
-        @logger.info "Exception raised in #{self.class}"
-        @logger.info e.inspect
-        @logger.info e.backtrace
+        @log.info "Exception raised in #{self.class}"
+        @log.info e.inspect
+        @log.info e.backtrace
       end
     end
   end
@@ -48,10 +48,10 @@ class ProcessThread
     @thread ||= _thread
   end
 
-  def initialize(inbound, outbound, working_area, logger)
+  def initialize(inbound, outbound, working_area, log)
     @in = inbound
     @out = outbound
-    @logger = logger
+    @log = log
     @thread = _thread
     @working_area = working_area
     _start
