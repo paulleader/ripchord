@@ -73,6 +73,7 @@ Ripchord will now run automatically when you insert a DVD in the drive.
 
 ## TODO
 
+* Deal with unknown or undefined disc names better.
 * General tidy up.
 * Tidy up logging, split out info and debug logging with optional debug mode.
 * Improve exception handling.
