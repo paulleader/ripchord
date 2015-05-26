@@ -1,101 +1,91 @@
+require 'fileutils'
+require 'securerandom'
+
 class NoWorkingDirectory < StandardError
 end
 
-class MissingInProgressTitle < StandardError
-end
-
 class WorkingArea
-
-  SUBDIRECTORIES = {
-    ripping: 'ripping',
-    ripped: 'ripped',
-    converting: 'converting',
-    finished: 'finished'
-  }
-
-  def ripping_dir(title = nil)
-    path = [@root, SUBDIRECTORIES[:ripping], title].compact
-    File.join(path)
-  end
-
-  def ripped_dir(title = nil)
-    path = [@root, SUBDIRECTORIES[:ripped], title].compact
-    File.join(path)
+  
+  attr_reader :job_id
+  
+  def subdir(purpose)
+    File.join(root, purpose)
   end
   
-  def ripped_disc_directory(title)
-    File.join(ripped_dir, title)
-  end  
+  def state_file
+    File.join(root, 'state.yml')
+  end
+
+  def ripped_directory
+    subdir('ripped')
+  end
   
-  def ripped_file(title)
-    File.join(ripped_disc_directory(title), 'title00.mkv')
-  end
-
-  def cleanup_rip(title)
-    FileUtils.rm_rf(ripped_disc_directory(title))
-  end
-
   def converted_directory
-    File.join(@root, SUBDIRECTORIES[:finished])
+    subdir('converted')
+  end
+    
+  def all_ripped_files
+    files = Dir.entries(ripped_directory).reject {|x| x == '.' || x == '..'}
+    files.collect do |ripped_file_name|
+      File.join(ripped_directory, ripped_file_name)
+    end
+  end
+      
+  def ripped_file
+    all_ripped_files.max do |a, b|
+      File.size(a) <=> File.size(b)
+    end
   end
 
-  def converting_directory
-    File.join(@root, SUBDIRECTORIES[:converting])
-  end
-
-  def converting_file(title)
-    File.join(converting_directory, title + '.mp4')
+  def converted_file
+    File.join(converted_directory, 'converted.mp4')
   end
   
-  def finished_file(title)
-    File.join(converted_directory, title + '.mp4')
-  end
-
   def check_working_directory
-    @log.info "Checking working directory"
-    raise NoWorkingDirectory, @root unless Dir.exist? @root
-  end
-
-  def subdir_path(stage)
-    File.join(@root, SUBDIRECTORIES[stage])
+    Log.info "Checking working directory"
+    raise NoWorkingDirectory, @working_root unless Dir.exist? @working_root
   end
 
   def make_subdirectories
-    SUBDIRECTORIES.each do |stage, path|
-      unless Dir.exist? subdir_path(stage)
-        @log.info "Creating #{subdir_path(stage)}"
-        Dir.mkdir subdir_path(stage)
+    ['ripped', 'converted'].each do |stage, path|
+      directory = subdir(stage)
+      unless Dir.exist? directory
+        Log.info "Creating #{directory}"
+        Dir.mkdir directory
       end
     end
   end
 
-  def rip_finished?(title)
-    File.exist?( ripping_dir(title) )
+  def working_root_path
+    File.join(@working_root, job_id)
   end
 
-  def move_to_transcoding(title)
-    if rip_finished? title
-      FileUtils.move( ripping_dir(title), ripped_dir(title) )
-    else
-      raise MissingInProgressTitle, title
+  def new_root_directory
+    check_working_directory
+    unless Dir.exists? working_root_path
+      Dir.mkdir working_root_path
+    end
+    working_root_path
+  end
+
+  def cleanup
+    if Dir.exists? @root_directory
+      FileUtils.rm_rf(@root_directory)
     end
   end
-    
-  def is_directory?(dir)
-    (Dir.exist?(dir) && dir !~ /\/\.{1,2}$/)
+
+  def root
+    @root_directory ||= new_root_directory
   end
   
-  def to_convert
-    Dir.foreach(ripped_dir).select do |dir|
-      is_directory? ripped_disc_directory(dir)
-    end
+  def self.existing_job_ids(working_root)
+    Dir.entries(working_root).reject {|x| x =~ /\./}
   end
 
-  def initialize(logger, root)
-    @log = logger
-    @root = root
-    check_working_directory
-    make_subdirectories
+  def initialize(working_root, uid = nil)
+    @job_id ||= (uid || SecureRandom.uuid)
+    @working_root = working_root
+    make_subdirectories if uid
   end
 
 end

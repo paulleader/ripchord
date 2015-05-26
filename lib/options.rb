@@ -1,3 +1,9 @@
+require 'optparse'
+require 'yaml'
+
+class MissingOption < StandardError
+end
+
 class Options
 
   attr_reader :log_file
@@ -7,49 +13,107 @@ class Options
   attr_reader :extension
   attr_reader :preset
   attr_reader :destination_directory
+  attr_reader :smtp
+  attr_reader :notification_address
+  attr_reader :notifications_from
+  attr_reader :config_file_location
+  attr_reader :show_config
 
-  def initialize
-    @log_file = '/var/log/dvdrip.log'
-    @working_directory = '/mnt/bigdisk/importer'
-    @disc = 'disc:0'
-    @device = '/dev/sr0'
-    @extension = "mp4"
-    @source_drive = "/dev/sr0"
-    @preset = 'AppleTV 2'
-    @destination_directory = '/mnt/bigdisk/Shared/Media/Movies'
-        
+  def default_options
+    {
+      config_file_location:  '/etc/ripchord.yml',
+      log_file:     '/var/log/ripchord.log',
+      disc:         'disc:0',
+      device:       '/dev/sr0',
+      extension:    "mp4",
+      source_drive: "/dev/sr0",
+      preset:       'AppleTV 2',
+      show_config:  false
+    }
+  end
+
+  def parse_command_line_options
+    options = Hash.new
+    
     OptionParser.new do |opts|
       opts.banner = "Usage: ripdisk [--log foo.log]"
 
+      opts.on("-c", "--config [CONFIG FILE]", "Config file in YAML format") do |opt|
+        options[:config_file_location] = opt
+      end
+
       opts.on("-l", "--log [LOG FILE]", "File to log to") do |opt|
-        @log_file = opt
+        options[:log_file] = opt
       end
       
-      opts.on("-o", "--working [WORKING DIRECTORY]", "Working directory") do |opt|
-        @working_directory = opt
+      opts.on("-w", "--working [WORKING DIRECTORY]", "Working directory") do |opt|
+        options[:working_directory] = opt
       end
       
       opts.on("-o", "--destination [DESTINATION DIRECTORY]", "Directory to output final file") do |opt|
-        @destination_directory = opt
+        options[:destination_directory] = opt
       end
       
       opts.on("-s", "--disc [SOURCE DISC]", "Source disc to rip from") do |opt|
-        @disc = opt
+        options[:disc] = opt
       end
       
       opts.on("-d", "--device [DEVICE]", "Source Device") do |opt|
-        @device = opt
+        options[:device] = opt
       end
       
       opts.on("-e", "--extension [EXTENSION]", "Output extension") do |opt|
-        @extension = opt
+        options[:extension] = opt
       end
 
       opts.on("-p", "--preset [PRESET]", "Handbrake preset") do |opt|
-        @preset = opt
+        options[:preset] = opt
+      end
+      
+      opts.on('-z', "--show-config", "Display the configuration and exit") do |opt|
+        options[:show_config] = opt
       end
       
     end.parse!
+    
+    options
+  end
+  
+  def command_line_options
+    @command_line_options ||= parse_command_line_options
+  end
+
+  def config_file_contents
+    @config_contents ||= File.read(@config_file_location)
+  end
+
+  def config_file_options
+    if File.exists? @config_file_location
+      YAML.load(config_file_contents).symbolize_keys
+    else
+      {}
+    end
+  end
+
+  def initialize
+    options = default_options.merge(command_line_options)
+    
+    @config_file_location = options[:config_file_location]
+    options.merge! config_file_options
+    
+    @log_file = options[:log_file]
+    @working_directory = options[:working_directory]
+    @disc = options[:disc]
+    @device = options[:device]
+    @extension = options[:extension]
+    @source_drive = options[:source_drive]
+    @preset = options[:preset]
+    @destination_directory = options[:destination_directory]
+
+    @smtp = options[:smtp]
+    @notification_address = options[:notification_address]
+    @notifications_from = options[:notifications_from]   
+    @show_config = options[:show_config] 
 
     def summary
       [

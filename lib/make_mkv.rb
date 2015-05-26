@@ -1,9 +1,12 @@
+require 'open3'
+
 class MakeMKV
 
-  attr_accessor :title
+  def self.rip(title, destination, disc = 'disc:0')
+    self.new(title, destination, disc).rip
+  end
 
-  def initialize(logger, title, disc = 'disc:0', destination)
-    @log = logger
+  def initialize(title, destination, disc)
     @title = title
     @disc = disc
     @destination = destination
@@ -20,17 +23,17 @@ class MakeMKV
   end
 
   def rip
-    @log.info "Ripping"
-    @log.info "======="
-    @log.info "Title: #{@title}"
-    @log.info "Destination: #{rip_directory}"
+    Log.info "Ripping"
+    Log.info "======="
+    Log.info "Title: #{@title}"
+    Log.info "Destination: #{rip_directory}"
     build_target_dir
     cmd = "/usr/bin/makemkvcon -r --decrypt --directio=true --noscan --minlength=1400 mkv disc:0 all #{rip_directory}"
-    @log.info cmd
+    Log.info cmd
 
     Open3.popen3(cmd) do |stdin, stdout, stderr, wait_thread|
       until (stdout_line = stdout.gets).nil? do
-        @log.info stdout_line
+        Log.info stdout_line
       end
     end
   end

@@ -1,23 +1,31 @@
 #!/usr/bin/ruby
-require 'optparse'
-require 'pathname'
-require 'logger'
-require 'open3'
-require 'fileutils'
-require 'thread'
+require "action_mailer"
 require_relative 'lib/log'
-require_relative 'lib/pipeline'
+require_relative 'lib/options'
+require_relative 'lib/process_controller'
 
 options = Options.new
+Log.set_out(options.log_file)
+Log.set_level(:debug)
 
 Thread.abort_on_exception = true
-
-Log.set_out(options.log_file)
 Log.info options.summary
 
-pipeline = Pipeline.new(options, Log)
+if options.show_config
+  puts options.summary
+else
+  ActionMailer::Base.raise_delivery_errors = true
+  ActionMailer::Base.delivery_method = :smtp
+  ActionMailer::Base.smtp_settings = options.smtp
+  ActionMailer::Base.view_paths = File.expand_path('./mailers/', File.dirname(__FILE__))
 
-Log.info "Ripchord shutting down"
+  process_controller = ProcessController.new(options)
 
+  while process_controller.running?
+    sleep 30
+  end
+
+  Log.info "Terminating"
+end
 
 
