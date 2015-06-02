@@ -85,7 +85,7 @@ class WorkingArea
   def initialize(working_root, uid = nil)
     @job_id ||= (uid || SecureRandom.uuid)
     @working_root = working_root
-    make_subdirectories if uid
+    make_subdirectories
   end
 
 end
