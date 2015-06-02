@@ -19,7 +19,7 @@ class Disc
   end
     
   def self.title
-    @title ||= self.get_title_from_disc
+    self.get_title_from_disc
   end
     
   def self.rip(destination)
