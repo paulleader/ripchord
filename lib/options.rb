@@ -113,7 +113,8 @@ class Options
     @smtp = options[:smtp]
     @notification_address = options[:notification_address]
     @notifications_from = options[:notifications_from]   
-    @show_config = options[:show_config] 
+    @show_config = options[:show_config]
+    @smtp = options[:smtp].symbolize_keys
 
     def summary
       [
@@ -122,7 +123,8 @@ class Options
         "Disc: #{@disc}",
         "Device: #{@device}",
         "Extension: #{@extension}",
-        "Preset: #{@preset}"
+        "Preset: #{@preset}",
+        "Mail: #{@smtp}"
       ].join("\n")
     end
   end
