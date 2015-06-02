@@ -27,6 +27,7 @@ class ProcessController
       _send_signal
     else
       _set_trap
+      @jobs = JobCollection.new(@options)
       if not @jobs.running?
         @jobs.start_job
       end
@@ -39,7 +40,6 @@ class ProcessController
 
   def initialize(options)
     @options = options
-    @jobs = JobCollection.new(@options)
     _startup
   end
 end
