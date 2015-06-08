@@ -1,0 +1,8 @@
+<p>"<%= @job.title %>" has failed.</p>
+
+<p>UID: <%= @job.uid %></p>
+
+<pre>
+  <%= @exception.message %>
+  <%= @exception.backtrace.join("\n") %>
+</pre>

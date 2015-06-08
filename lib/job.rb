@@ -40,6 +40,7 @@ class Job
     Log.info "Destination:"
     Log.info destination_file
     FileUtils.move(@working_area.converted_file, destination_file)
+    Notifier.installed(self).deliver
   end
   
   def _cleanup
@@ -47,28 +48,34 @@ class Job
   end
       
   def _process_disc
-    until @state.last?
-      Log.info "State = #{state.state}"
-      case @state.state
-      when :start
-        Log.info "Starting job #{@working_area.job_id}"
-      when :initializing
-        nil
-      when :ripping
-        _rip
-      when :converting
-        _convert
-      when :installing
-        _install
-      when :cleanup
-        _cleanup
-      when :finished
-        Log.info "Finished"
-        nil
-      else
-        raise "No match for #{state.state}"
+    begin
+      until @state.last? || @state.failed?
+        Log.info "State = #{state.state}"
+        case @state.state
+        when :start
+          Log.info "Starting job #{@working_area.job_id}"
+        when :initializing
+          nil
+        when :ripping
+          _rip
+        when :converting
+          _convert
+        when :installing
+          _install
+        when :cleanup
+          _cleanup
+        when :finished
+          Log.info "Finished"
+        when :failed
+          Log.info "Job failed"
+        else
+          raise "No match for #{state.state}"
+        end
+        @state.step!
       end
-      @state.step!
+    rescue => e
+      Notifier.failed(self, e).deliver
+      @state.failed!
     end
   end
   

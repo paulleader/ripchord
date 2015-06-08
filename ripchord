@@ -8,7 +8,6 @@ options = Options.new
 Log.set_out(options.log_file)
 Log.set_level(:debug)
 
-Thread.abort_on_exception = true
 Log.info options.summary
 
 if options.show_config

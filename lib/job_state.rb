@@ -43,6 +43,15 @@ class JobState
     @state = next_state
     pickle
   end
+  
+  def failed!
+    @state = :failed
+    pickle
+  end
+  
+  def failed?
+    @state == :failed
+  end
     
   def last?
     @state == :finished
