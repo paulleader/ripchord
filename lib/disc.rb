@@ -1,10 +1,19 @@
 require_relative 'make_mkv'
+require 'securerandom'
 
 class Disc
   def self.semaphore
     @@semaphore ||= Mutex.new
   end
-
+  
+  def self._blank_title?(title)
+    title.nil? || title.gsub(/\s+/, '').empty?
+  end
+  
+  def self._random_title
+    "Unknown-#{SecureRandom.uuid}"
+  end
+  
   def self.get_title_from_disc
     cmd = "blkid -o value -s LABEL /dev/sr0"  
     title = `#{cmd}`.chomp
@@ -15,7 +24,11 @@ class Disc
       title.gsub!(/\s+/, ' ')
     end
     puts "TITLE: #{title}"
-    title
+    if _blank_title?(title)
+      _random_title
+    else
+      title
+    end
   end
     
   def self.title
