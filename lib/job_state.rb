@@ -41,7 +41,7 @@ class JobState
   
   def step!
     @state = next_state
-    pickle
+    pickle unless @state == :finished
   end
   
   def failed!
