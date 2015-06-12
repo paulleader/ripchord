@@ -71,15 +71,19 @@ Udev is a mechanism for triggering scripts based on hardware events such as inse
 
 Udev is not meant for starting long-running processes and may terminate any that don't finish quickly. To prevent this you will need a simple script in /usr/bin that runs Ripcord as a background process. Udev shells only have the basic environment set up so you will probably need to set environment variables to make sure MakeMKV and Handbrake work. I use the following:
 
-    #!/bin/bash
-    echo 'PATH=/usr/lib64/ccache:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin /usr/local/bin/ripchord/ripchord' | at now
+```bash
+#!/bin/bash
+echo 'PATH=/usr/lib64/ccache:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin /usr/local/bin/ripchord/ripchord' | at now
+```
 
 This uses the 'at' command to trigger ripchord immediately as a totally separate process that won't get killed by
 udev.
 
 Then create a rule file in /etc/udev/rules.d/ containing something like...
 
-    SUBSYSTEM=="block", KERNEL=="sr0", ENV{ID_CDROM_MEDIA_DVD}=="1", RUN+="/usr/bin/dvdautoinsert"
+```bash
+SUBSYSTEM=="block", KERNEL=="sr0", ENV{ID_CDROM_MEDIA_DVD}=="1", RUN+="/usr/bin/dvdautoinsert"
+```
     
 Ripchord will now run automatically when you insert a DVD in the drive.
 
