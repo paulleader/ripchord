@@ -2,13 +2,18 @@
 
 A concurrent, pipelined DVD ripping and transcoding tool.
 
+* No human intervention needed except inserting each disc to rip. Discs are ejected when they finish ripping.
+* Ripping and transcoding happen in parallel, allowing you to rapidly rip multiple discs and let the conversion happen in the background while you sleep.
+* Each disc is processed in its own thread, so if there is a problem with one job it shouldn't stop other jobs.
+* Email notifications at each step of the process, and on failure of a job.
+
 Ripping and then transcoding of DVDs takes a long time, especially on a low power media or home server. However most of that time is spent in the transcoding stop. Ripping a DVD is much faster than transcoding, but requires a person to insert each disk. On my micro-server ripping takes about 20 minutes but transcoding happens at about real-time.
 
-Ripchord will rip discs continuously, queuing transcoding jobs to be done in the background without human intervention, allowing you to keep feeding it discs without waiting for transcoding to finish. You can feed half a dozen disc through it in an evening and have the transcoding complete overnight.
+Ripchord will rip discs continuously, queuing transcoding jobs to be done in the background without human intervention, so you can keep feeding it discs without waiting for transcoding to finish.
 
 ## Process Overview
 
-Ripchord is designed to be launched on the insert of a disc using a mechanism such as udev.
+Ripchord is designed to be launched on the insert of a disc using a mechanism such as udev (see below).
 
 On startup Ripchord checks if it is already running:
 
@@ -18,11 +23,6 @@ On startup Ripchord checks if it is already running:
 The disc is ripped into a working directory using MakeMKV.
 This ripped MKV is then transcoded to mp4 using Handbrake.
 The transcoded file is then moved to the destination folder.
-
-Ripping and transcoding are done in separate threads, ripped video is queued up for the transcoder to process in order.
-
-## Email Notifications
-Ripchord will email you as each disc is ripped, converted, and installed. See the configuration section of specifying outbound mail details.
 
 ## Dependencies
 
@@ -115,7 +115,7 @@ Ripchord will now run automatically when you insert a DVD in the drive.
 * Add support for audio ripping.
 
 Things I don't have the hardware for but which would be nice to do eventually:
-* Add support for multiple transcoder threads.
+* Add support for multiple transcoder threads. This would be a relatively easy change, just swap the Ruby semaphore for an implementation of a counting semaphore whose limit it set by the configuration. Everything else should then just run.
 * Add support for multiple concurrent rips (if you have multiple drives).
 
 ## Credits
