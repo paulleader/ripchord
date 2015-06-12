@@ -2,7 +2,7 @@
 
 A concurrent, pipelined DVD ripping and transcoding tool.
 
-Ripping and then transcoding of DVDs takes a long time, especially on a low power media or home server. However ripping a DVD is much fast than transcoding, but requires a person to insert each disk. On my micro-server ripping takes about 20 minutes, but transcoding happens at about real-time.
+Ripping and then transcoding of DVDs takes a long time, especially on a low power media or home server. However most of that time is spent in the transcoding stop. Ripping a DVD is much faster than transcoding, but requires a person to insert each disk. On my micro-server ripping takes about 20 minutes but transcoding happens at about real-time.
 
 Ripchord will rip discs continuously, queuing transcoding jobs to be done in the background without human intervention, allowing you to keep feeding it discs without waiting for transcoding to finish. You can feed half a dozen disc through it in an evening and have the transcoding complete overnight.
 
@@ -21,34 +21,63 @@ The transcoded file is then moved to the destination folder.
 
 Ripping and transcoding are done in separate threads, ripped video is queued up for the transcoder to process in order.
 
+## Email Notifications
+Ripchord will email you as each disc is ripped, converted, and installed. See the configuration section of specifying outbound mail details.
+
 ## Dependencies
 
 ### Gems
 
 * Pidfile: You'll need to install is from my fork which has a bug fix - git@github.com:paulleader/pidfile.git
+* action_mailer
 
 ### External Tools
 
 * MakeMKV: Actually rips the DVD/Blueray - http://www.makemkv.com/
 * Handbrake: To transcode the rip to something sensible for playback - https://handbrake.fr/
 
-## Installation
+# Installation
 
-Currently this is just a ruby script so download the source, install it somewhere sensible and run it from there.
+Currently this is just a ruby script so download the source, install it all somewhere sensible (/usr/local/bin) and run it from there.
 
-Update lib/options.rb with your particular setup.
+## Configuration
+By default Ripchord expects to find the configuration file in /etc/ripchord.yml but you can override that with the --config command line option. This should look something like the following...
+
+```YAML
+---
+log_file: /var/log/ripchord.log
+working_directory: /mnt/my_big_disk/ripchord_working_area
+disc: 'disc:0'
+device: /dev/sr0
+extension: mp4
+source_drive: /dev/sr0
+preset: AppleTV 2
+destination_directory: /mnt/my_big_disc/media/movies
+notification_address: me@example.com
+notifications_from: ripchord@example.com
+smtp:
+  address: smtp.gmail.com
+  port: 587
+  domain: gmail.com
+  authentication: plain
+  user_name: myusername
+  password: mypassword
+  enable_starttls_auto: true
+```
 
 ## Triggering with udev
 
 Udev is a mechanism for triggering scripts based on hardware events such as inserting a disc.
 
-Udev is not meant for starting long-running processes and may terminate any that don't finish quickly. To prevent this you will need a simple script in /usr/bin that runs Ripcord as a background process ('/my/path/ripcord &'). Udev shells only have the basic environment set up so you will probably need to set environment variables to make sure MakeMKV and Handbrake work. I use the following:
+Udev is not meant for starting long-running processes and may terminate any that don't finish quickly. To prevent this you will need a simple script in /usr/bin that runs Ripcord as a background process. Udev shells only have the basic environment set up so you will probably need to set environment variables to make sure MakeMKV and Handbrake work. I use the following:
 
     #!/bin/bash
-    PATH=/usr/lib64/ccache:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin /usr/local/bin/ripchord/ripchord &
-    exit
+    echo 'PATH=/usr/lib64/ccache:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin /usr/local/bin/ripchord/ripchord' | at now
 
-Then create a rulefile in /etc/udev/rules.d/ containing something like...
+This uses the 'at' command to trigger ripchord immediately as a totally separate process that won't get killed by
+udev.
+
+Then create a rule file in /etc/udev/rules.d/ containing something like...
 
     SUBSYSTEM=="block", KERNEL=="sr0", ENV{ID_CDROM_MEDIA_DVD}=="1", RUN+="/usr/bin/dvdautoinsert"
     
@@ -57,7 +86,7 @@ Ripchord will now run automatically when you insert a DVD in the drive.
 ## Limitations
 
 * Transcoding is limited to a single thread, so even if you have a really beefy machine it will only do one job at a time
-* It's limited to using MakeMKV and Handbrake.
+* It's currently limited to using MakeMKV (ripping) and Handbrake (conversion).
 * It only handles movies (only long tracks are currently ripped and converted).
 * Subtitles are not extracted.
 * Naming of the result is based on the title found on the disc, this is not always that reliable, so you may have to rename some files if you want your media player to correctly identify them.
@@ -73,24 +102,17 @@ Ripchord will now run automatically when you insert a DVD in the drive.
 
 ## TODO
 
-* Deal with unknown or undefined disc names better.
 * General tidy up.
 * Tidy up logging, split out info and debug logging with optional debug mode.
-* Improve exception handling.
-* Extract configuration into a configuration file.
 * Identify TV series and rip multiple episodes into a directory with appropriate file names.
-* Store the current state of jobs in a persistent store so that processing can be restarted after a failure.
-* Package as a gem.
-* Add notifications to email.
-* Work out a better way of identifying discs.
+* Package somehow.
+* Work out a better way of identifying discs. Is there something like CDDB for DVDs?
 * Support alternative rippers and transcoders.
 * Add support for audio ripping.
 
 Things I don't have the hardware for but which would be nice to do eventually:
 * Add support for multiple transcoder threads.
 * Add support for multiple concurrent rips (if you have multiple drives).
-
-I'm tempted to invert the concurrency model from the current one thread per stage, linked by queues, to one thread per disc, with counting semaphores/mutexes for synchronisation.
 
 ## Credits
 
